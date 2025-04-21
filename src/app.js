@@ -69,6 +69,59 @@ document.addEventListener('alpine:init', () => {
     });
 });
 
+// Form validation
+const checkoutButton = document.querySelector('.checkout-button');
+checkoutButton.disabled = true;
+
+const form = document.querySelector('#checkoutForm');
+form.addEventListener('keyup', function() {
+    for(let i = 0; i  < form.elements.length; i++) {
+        if (form.elements[i].value.length !== 0) {
+            checkoutButton.classList.remove('disabled');
+            checkoutButton.classList.add('disabled');
+        } else {
+            return false;
+        }
+    }
+    checkoutButton.disabled = false;
+    checkoutButton.classList.remove('disabled');
+});
+
+// Kirim data ketika tombol checkout diklik
+checkoutButton.addEventListener('click', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const data = new URLSearchParams(formData);
+    const objData = Object.fromEntries(data);
+    // const message = formatMessage(objData);
+    // window.open('http://wa.me/6285243306388?text=' + encodeURIComponent(message));
+
+// Minta transaction token menggunakan ajax / fetch
+try {
+    const response = await fetch('php/placeOrder.php', {
+        method: 'POST',
+        body: data,
+    });
+    const token = await response.text();
+    // console.log(token);
+    window.snap.pay(token);
+    } catch(err) {
+    console.log(err.message);
+}
+});
+
+// Format pesan whatsapp
+const formatMessage = (obj) => {
+    return `Data Customer
+    Nama: ${obj.name}
+    Email: ${obj.email}
+    No HP: ${obj.phone}
+Data Pesanan
+    ${JSON.parse(obj.items).map((item) => `${item.name} (${item.quantity} x ${rupiah(item.total)}) \n`)}
+    TOTAL: ${rupiah(obj.total)}
+    Terima kasih.`;
+}
+
 // Konversi ke Rupiah
 const rupiah = (number) => {
     return new Intl.NumberFormat('id-ID', {
